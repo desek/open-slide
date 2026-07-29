@@ -1,0 +1,216 @@
+---
+title: open-slide video
+description: Capture a whole deck as a single MP4 by seeking its animations frame by frame.
+---
+
+```npm
+open-slide video --slide intro
+# or
+open-slide video --all --fps 60 --dwell 3000
+```
+
+Boots the same in-process Vite dev server and headless Chromium the PNG
+exporter uses ([`open-slide export`](/docs/cli/export)), then captures a
+whole deck as **one continuous browsing session**: each page's animation
+played through at a fixed frame rate, held for `--dwell`, joined by the
+deck's own slide transitions, and encoded once with `ffmpeg`.
+
+Every animation is paused the moment it appears and driven by setting its
+`currentTime` per frame, so frames are seeked rather than sampled on a
+timer. That is the difference from a screen recording, which samples
+whenever the compositor happened to deliver a frame and therefore drops
+and duplicates frames under load. No deck needs editing to be capturable
+— existing CSS-keyframe decks are seekable as they are.
+
+## Prerequisites
+
+Two, both checked before any work is done. A missing one exits with code
+`2` and prints a copy-pasteable install command.
+
+### Playwright
+
+`playwright-chromium` is **not** a runtime dependency of
+`@open-slide/core`. Install it in the workspace that runs the capture:
+
+```bash
+pnpm add -D playwright-chromium
+npx playwright install chromium
+```
+
+### ffmpeg
+
+`ffmpeg` must be on `PATH`. It is invoked as a subprocess and never
+bundled:
+
+```bash
+brew install ffmpeg          # macOS
+sudo apt install ffmpeg      # Debian/Ubuntu
+winget install Gyan.FFmpeg   # Windows
+```
+
+## Flags
+
+| Flag             | Default          | Description                                                                       |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------- |
+| `--slide <id>`   | —                | Restrict to a single deck (the `slideId` that appears in `/s/:slideId`).           |
+| `--all`          | off              | Capture every discoverable deck. Mutually exclusive with `--slide`.               |
+| `--page <n>`     | —                | Capture a single 1-based page index. Requires `--slide`.                          |
+| `--out <dir>`    | `./video-export` | Destination directory (created if missing).                                       |
+| `--per-page`     | off              | Write one MP4 per page instead of one per deck.                                   |
+| `--fps <n>`      | `30`             | Frames per second. Must be between `1` and `120` inclusive.                       |
+| `--duration <ms>`| measured         | Replace every page's measured animation length. Boundaries are unaffected.        |
+| `--dwell <ms>`   | `1500`           | Hold after each page's animation settles. Run-wide; there is no per-page dwell.   |
+| `--keep-frames`  | off              | Keep the intermediate PNG frames instead of deleting them after a good encode.    |
+| `--port <port>`  | OS-assigned      | Pin the in-process dev server's port instead of an ephemeral one.                 |
+| `--timeout <ms>` | `15000`          | Per-page readiness timeout.                                                       |
+
+Either `--slide` or `--all` is required. `--page` without `--slide`, both
+selection flags together, and an out-of-range `--fps` are usage errors and
+exit with code `2`.
+
+### How a page's length is decided
+
+Each page contributes its animation followed by the dwell. The animation
+length is measured from the page's **longest finite animation**; infinite
+animations are seeked too, so looping motion animates in the output, but
+they are excluded from the measurement because they have no end. A page
+with no finite animation falls back to 3000 ms, and any measured or
+overridden duration is clamped to 60000 ms so one runaway delay cannot
+produce an hour of frames.
+
+## Transitions are the deck's own
+
+Pages are **not** crossfaded at encode time. The capture advances the deck
+inside the viewer — the same navigation an audience drives — so
+`SlideTransitionLayer` mounts the outgoing and incoming layers and creates
+the real transition animations, and those animations are then seeked frame
+by frame like any other. The boundary's length is measured from the
+animations that actually appeared, not read off the declared
+`SlideTransition.duration`, because per-phase and morph overrides can
+extend it.
+
+Two consequences follow:
+
+- The output shows whatever transitions the deck declares — see
+  [`SlideTransition`](/docs/primitive/transition) and
+  [Slide transitions](/docs/reference/slide-transitions).
+- A deck that declares **no** transition produces no boundary frames at
+  all. Its pages simply cut.
+
+The capture also pins `prefers-reduced-motion: no-preference` in the
+browser context, because the viewer disables transitions outright under a
+`reduce` preference and would otherwise produce a silently
+transition-free file.
+
+## Step-gated decks fall back to per-page output
+
+A deck whose pages are gated by [`<Steps>` / `<Step>`](/docs/primitive/step)
+is written as **one MP4 per page** rather than one per deck, without you
+passing `--per-page`, and the CLI warns when that happens. A continuous
+capture cannot cross a step-gated page without walking its reveals, and
+the capture never advances past a pending step.
+
+**No content is missing.** Each page in the fallback is loaded fresh, and
+a directly mounted page arrives with every step already revealed — the
+same rule that applies when a human jumps into a page. What the fallback
+loses is the reveal *motion*, which only fires on a step change that never
+happens on a fresh mount, and the inter-page transitions, because
+independent page loads have no boundaries.
+
+The fallback is a successful outcome: the run continues and exits `0`.
+
+### Getting back to a single file: a loop variant
+
+The warning recommends authoring a **loop variant** of the deck — a
+sibling deck built for capture rather than for presenting, with:
+
+1. step reveals replaced by time-based animations,
+2. transitions declared between pages,
+3. pages that advance automatically instead of on input,
+4. a closing transition into the first page's background, so the file
+   plays as a seamless loop.
+
+A deck authored that way needs no presenter, which is precisely what a
+recording lacks. The pattern is documented as
+`references/loop-variant.md` in the bundled
+[`/slide-authoring`](/docs/skills/slide-authoring) skill, so the agent
+writing your deck can build one; the CLI warning and that reference are
+single sourced and cannot drift apart.
+
+## Output
+
+Written into `--out` as:
+
+```text
+{slideId}.mp4              # whole-deck shape
+{slideId}-p{N}.mp4         # per-page shape (--per-page, or the step-gated fallback)
+```
+
+`N` is the 1-based page index, zero-padded to the total page count's
+width, matching the PNG exporter's convention. A file the fallback wrote
+is indistinguishable from one `--per-page` wrote: both shapes share one
+capture path, one encode path, and one filename derivation.
+
+Under `--all`, a workspace holding both kinds of deck legitimately
+produces **both shapes in one invocation**, which is why the closing
+summary states which shape each deck got.
+
+Streams are H.264 (`libx264`, CRF 18) in `yuv420p` with even dimensions,
+so the files play in browsers and system players rather than only in
+developer tooling. Every frame is exactly 1920×1080. Intermediate frames
+are deleted after a successful encode unless `--keep-frames` is passed.
+
+## Console output
+
+One line per page and per boundary, then one line per written file, then a
+per-deck summary:
+
+```text
+intro:p1 — 5 animation(s), 1500ms, 90 frame(s)
+intro:p1→p2 — 3 transition animation(s), 600ms, 18 frame(s)
+intro:p2 — 2 animation(s), 1200ms, 81 frame(s)
+intro → video-export/intro.mp4 (189 frames @ 30fps)
+Rendered 2 page(s) from 1 deck(s) to video-export
+  intro — 1 MP4 (whole deck)
+  workshop — 4 MP4(s) (per page, step-gated fallback)
+```
+
+The animation count is the load-bearing number: a page reporting zero
+animations is visible on stdout rather than only after opening the file.
+Under `--all`, a deck reporting zero pages is named on stderr and skipped
+rather than encoded.
+
+## Reproducibility
+
+A capture is reproducible in a way a screen recording is not, but the
+guarantee is qualified by segment kind. Across two runs over an unchanged
+deck:
+
+- **Page segments and dwell holds are byte-identical.**
+- **Transition boundary segments are reproducible to within antialiasing
+  on scale-animated layers.** Edge antialiasing on a scaled compositor
+  layer rasterises to one of two stable variants, chosen per run, so a
+  boundary frame can differ between runs with no capture defect. The bound
+  held to is `YMAX <= 160` and `YAVG <= 1.0` on the absolute luma
+  difference per corresponding frame pair.
+- The frame index and count of every segment are identical across runs
+  regardless of kind.
+
+See CR-0003 for the measurements behind those thresholds.
+
+## Exit codes
+
+| Code | Meaning                                                                            |
+| ---- | ---------------------------------------------------------------------------------- |
+| `0`  | Success — including a run that fell back to per-page output.                        |
+| `1`  | Unrecoverable runtime error (dev server failed, Chromium crashed, ffmpeg failed).   |
+| `2`  | Usage or preflight error (missing Playwright or ffmpeg, bad flags, unknown `--slide`). |
+
+The browser and the dev server are torn down on every exit path, including
+error and usage-error paths.
+
+## Not supported
+
+Audio, presenter-driven timing, per-page dwell, driving `<Steps>` as a
+timeline, formats other than MP4, and an in-browser recording UI. This is
+CLI and CI tooling, matching where `open-slide export` sits.

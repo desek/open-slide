@@ -27,6 +27,7 @@ Each framework primitive has a full reference file under `references/` in this s
 | `<Steps>` / `<Step>` | staging a page's reveal | `references/steps.md` |
 | `SlideTransition` | declaring any enter/exit animation | `references/transitions.md` |
 | `MorphElement` + `morph` | morphing a shared element across pages | `references/morph.md` |
+| Loop variant | authoring a deck to be captured as video | `references/loop-variant.md` |
 
 ## Hard rules
 
@@ -262,6 +263,12 @@ Read `references/transitions.md` before declaring one — it has the full type c
 When the *same visual object* exists on two adjacent pages, wrap it on both pages in `MorphElement` with the same `id` and enable `morph` on the incoming page's transition — position, size, radius, and colors interpolate in one continuous move (Keynote's "Magic Move"). Morph is for **state continuity** (a toggle sliding, a card expanding, a box joining a row); don't morph decoration.
 
 Read `references/morph.md` before writing one — the seven rules there (opacity-only enter/exit, deterministic geometry, no `transform` on the morph node, `useIsActivePage()` gating, …) were each earned on a real deck, and violating any of them produces a visibly broken morph.
+
+## Loop variants (a deck authored for capture)
+
+`open-slide video` captures a deck as an MP4, and a deck with any step-gated page falls back to one file per page, because the capture never advances past a pending step. When the deliverable is a video rather than a talk, author a **loop variant**: a sibling deck (`slides/<id>-loop/`) in which step reveals are replaced by time-based animations, transitions are declared between pages, pages advance automatically instead of on input, and a closing transition lands on the first page's background so the file plays as a seamless loop.
+
+Read `references/loop-variant.md` before writing one — it covers the four elements in full, how the timeline is measured, and the anti-patterns.
 
 ## Repeated elements: component, not `map`
 

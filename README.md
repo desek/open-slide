@@ -55,6 +55,18 @@ One command exports your deck as a self-contained static HTML site, a print-read
 
 PNG export is also how the agent writing your slides **checks its own work**: a 1920×1080 image is readable by vision-capable models, so clipping, overflow, distorted aspect ratios, and collisions get caught by looking at the slide instead of guessing at it.
 
+### 🎥 Capture a deck as video
+
+`open-slide video --slide <id>` records a whole deck as a single MP4: every page's animation played through, held for `--dwell` milliseconds, joined by the deck's own slide transitions, and encoded once. Animations are paused and seeked frame by frame rather than sampled on a timer, so the capture is frame-exact rather than sampled whenever the compositor happened to deliver: page and dwell frames are reproducible byte for byte across runs, and transition frames are reproducible to within antialiasing on scale-animated layers. A screen recording is reproducible in neither sense. Needs `ffmpeg` on `PATH`.
+
+```bash
+open-slide video --slide intro                 # one MP4 for the deck
+open-slide video --all --fps 60 --dwell 3000   # every deck, 60fps, 3s hold per page
+open-slide video --slide intro --per-page      # one MP4 per page instead
+```
+
+A deck with a step-gated page falls back to one MP4 per page automatically, since the capture never advances past a pending step; each page is captured with every step already revealed, so no content is missing. Run `open-slide video --help` for every flag.
+
 ### 📁 Slide manager
 
 Organise decks into folders with custom emoji and drag-and-drop to reorder. Useful once you've built more than three decks and need to find anything.
