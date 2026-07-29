@@ -20,6 +20,9 @@ importers:
       happy-dom:
         specifier: 20.9.0
         version: 20.9.0
+      playwright-chromium:
+        specifier: ~1.56.1
+        version: 1.56.1
       turbo:
         specifier: ^2.10.5
         version: 2.10.7

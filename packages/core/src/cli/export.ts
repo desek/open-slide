@@ -38,7 +38,15 @@ type PlaywrightChromium = { chromium: typeof Chromium };
 
 const CANVAS_WIDTH = 1920;
 const CANVAS_HEIGHT = 1080;
-const DEFAULT_TIMEOUT_MS = 15_000;
+/**
+ * Per-page readiness timeout, in milliseconds, shared by every capture
+ * subcommand.
+ *
+ * Exported so `video.ts` consumes this one declaration rather than keeping a
+ * second copy that could drift from the `--timeout` help text both subcommands
+ * quote.
+ */
+export const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_OUT_DIR = './png-export';
 
 /**
