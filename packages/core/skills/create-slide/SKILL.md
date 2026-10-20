@@ -62,17 +62,22 @@ Sketch the slide as a list of page roles before writing code. Common page types:
 
 **Rule of thumb**: one idea per page. If you're tempted to put two, split them.
 
+**File layout** follows from the planned page count: a deck of 6 pages or more puts each page in pages/<nn>-<slug>.tsx, shared components in shared/, and index.tsx only imports, orders, and holds design, meta and notes. A deck of 5 pages or fewer stays in one `index.tsx`.
+
 If the deck topic naturally calls for specific real images the user must supply (product screenshots, team photos, customer dashboards), plan where those go and use `<ImagePlaceholder>` from `@open-slide/core` — see the **Image placeholders** section in `slide-authoring`. Default is **no placeholders**: only insert one when a real image is genuinely required.
 
 ## Step 5 — Commit to a visual direction
 
 Pick one coherent palette / type scale / aesthetic and hold it across every page. The full set of constraints (palette structure, type scale, padding, aesthetic options) lives in `slide-authoring` — apply it.
 
-**Default: declare a top-level `export const design: DesignSystem = { … }`** at the top of `index.tsx` (after imports) using the chosen palette / type scale, and reference the values via `var(--osd-X)` from inline styles. This keeps the slide tweakable from the Design panel after generation, which is what the user almost always wants. Only skip the `design` const for a one-off slide whose palette is intentionally locked and not meant to be re-themed — in that case, fall back to the local `palette` constants pattern. The "Design system" section of `slide-authoring` covers the format and available tokens.
+**Default: declare a top-level `export const design: DesignSystem = { … }`** at the top of `index.tsx` (after imports, in both layouts) using the chosen palette / type scale, and reference the values via `var(--osd-X)` from inline styles. This keeps the slide tweakable from the Design panel after generation, which is what the user almost always wants. Only skip the `design` const for a one-off slide whose palette is intentionally locked and not meant to be re-themed — in that case, fall back to the local `palette` constants pattern. The "Design system" section of `slide-authoring` covers the format and available tokens.
 
 If the `frontend-design` skill is available, consult it for deeper aesthetic guidance when the user wants something bold.
 
-## Step 6 — Write `slides/<id>/index.tsx`
+## Step 6 — Write the slide files
+
+Write the files in the layout chosen in Step 4: one `slides/<id>/index.tsx` for 5 pages or fewer; otherwise one `pages/<nn>-<slug>.tsx` per page, shared components in `shared/`, and an `index.tsx` that imports and orders the pages and holds `design`, `meta` and `notes`.
+
 
 Read the **`slide-authoring`** skill before writing — it covers the file contract, canvas rules, type scale, spacing, and asset imports, and it includes a starter template you can copy. Don't duplicate that knowledge here; use it.
 
