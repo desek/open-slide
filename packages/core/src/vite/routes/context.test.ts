@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { listDeckFiles, makeContext, resolveDeckFile } from './context.ts';
+import { isInsideDir, listDeckFiles, makeContext, resolveDeckFile } from './context.ts';
 
 async function tempDeck() {
   const cwd = await fs.mkdtemp(path.join(os.tmpdir(), 'open-slide-deck-'));
@@ -47,5 +47,22 @@ describe('resolveDeckFile', () => {
     }
     await expect(resolveDeckFile(ctx, '../demo', 'index.tsx')).resolves.toBeNull();
     await expect(resolveDeckFile(ctx, 'demo', undefined)).resolves.toBeNull();
+  });
+});
+
+describe('isInsideDir', () => {
+  it('accepts a file under the filesystem root', () => {
+    expect(
+      isInsideDir(
+        path.parse(process.cwd()).root,
+        path.join(path.parse(process.cwd()).root, 'a.tsx'),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects the directory itself and paths outside it', () => {
+    expect(isInsideDir('/deck', '/deck')).toBe(false);
+    expect(isInsideDir('/deck', '/other/a.tsx')).toBe(false);
+    expect(isInsideDir('/deck', '/deck-2/a.tsx')).toBe(false);
   });
 });

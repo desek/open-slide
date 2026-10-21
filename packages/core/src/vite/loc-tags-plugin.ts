@@ -23,6 +23,10 @@ function alreadyTagged(opening: t.JSXOpeningElement): boolean {
   );
 }
 
+export function escapeJsxAttr(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 export function injectLocTags(code: string, relpath: string): string | null {
   const ast = tryParse(code);
   if (!ast) return null;
@@ -35,7 +39,7 @@ export function injectLocTags(code: string, relpath: string): string | null {
     if (!isTaggableJsxName(name) || alreadyTagged(opening)) return;
     insertions.push({
       offset: name.end ?? 0,
-      text: ` data-slide-loc="${relpath}:${node.loc.start.line}:${node.loc.start.column}"`,
+      text: ` data-slide-loc="${escapeJsxAttr(relpath)}:${node.loc.start.line}:${node.loc.start.column}"`,
     });
   });
 

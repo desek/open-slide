@@ -65,6 +65,8 @@ export function useEditor(slideId: string) {
         else groups.set(edit.file, [index]);
       });
       const results: EditResult[] = new Array(edits.length);
+      let sent = 0;
+      let lastError: unknown;
       for (const [file, indices] of groups) {
         const batch = indices.map((i) => {
           const { file: _file, ...rest } = edits[i];
@@ -72,22 +74,30 @@ export function useEditor(slideId: string) {
           const local = indices.indexOf(rest.dependsOn);
           return { ...rest, dependsOn: local >= 0 ? local : undefined };
         });
-        const res = await fetch('/__edit/batch', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ slideId, file, edits: batch }),
-        });
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          results?: EditResult[];
-        };
-        if (!res.ok) {
-          throw new Error(body.error ?? `POST /__edit/batch → ${res.status}`);
+        try {
+          const res = await fetch('/__edit/batch', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ slideId, file, edits: batch }),
+          });
+          const body = (await res.json().catch(() => ({}))) as {
+            error?: string;
+            results?: EditResult[];
+          };
+          if (!res.ok) {
+            throw new Error(body.error ?? `POST /__edit/batch → ${res.status}`);
+          }
+          sent++;
+          indices.forEach((i, k) => {
+            results[i] = body.results?.[k] ?? { ok: false, error: 'missing result' };
+          });
+        } catch (err) {
+          lastError = err;
+          const error = err instanceof Error ? err.message : String(err);
+          for (const i of indices) results[i] = { ok: false, error };
         }
-        indices.forEach((i, k) => {
-          results[i] = body.results?.[k] ?? { ok: false, error: 'missing result' };
-        });
       }
+      if (sent === 0) throw lastError;
       return results;
     },
     [slideId],

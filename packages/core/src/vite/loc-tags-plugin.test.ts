@@ -226,3 +226,10 @@ describe('locTagsPlugin on Windows-style paths', () => {
     expectTagged('/repo/slides', '/repo/slides/cover/index.tsx');
   });
 });
+
+describe('injectLocTags file name escaping', () => {
+  it('encodes a double quote in the relpath as an entity', () => {
+    const out = injectLocTags('const A = () => <div />;', 'pages/a"b.tsx');
+    expect(out).toContain('data-slide-loc="pages/a&quot;b.tsx:1:16"');
+  });
+});

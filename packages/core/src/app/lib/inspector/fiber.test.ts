@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { findSlideSource } from './fiber.ts';
+import { findSlideSource, slideLocSelector } from './fiber.ts';
 
 class FakeHTMLElement {
   dataset: Record<string, string> = {};
@@ -173,5 +173,13 @@ describe('findSlideSource fallback', () => {
     expect(hit).not.toBeNull();
     expect(hit?.line).toBe(99);
     expect(hit?.column).toBe(3);
+  });
+});
+
+describe('slideLocSelector', () => {
+  it('escapes a double quote and a backslash in the file name', () => {
+    expect(slideLocSelector({ file: 'pages/a"b\\c.tsx', line: 3, column: 4 })).toBe(
+      '[data-slide-loc="pages/a\\"b\\\\c.tsx:3:4"]',
+    );
   });
 });

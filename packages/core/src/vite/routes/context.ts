@@ -88,6 +88,11 @@ function isSafeRelativeFile(file: string): boolean {
   return file.endsWith('.tsx');
 }
 
+export function isInsideDir(dir: string, file: string): boolean {
+  const rel = path.relative(dir, file);
+  return rel !== '' && rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
+}
+
 export async function resolveDeckFile(
   ctx: ApiContext,
   slideId: string,
@@ -99,7 +104,7 @@ export async function resolveDeckFile(
   try {
     const realDeck = await fs.realpath(deckDir);
     const realFile = await fs.realpath(path.join(deckDir, file));
-    if (!realFile.startsWith(realDeck + path.sep)) return null;
+    if (!isInsideDir(realDeck, realFile)) return null;
     const stat = await fs.stat(realFile);
     return stat.isFile() ? realFile : null;
   } catch {

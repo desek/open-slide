@@ -33,8 +33,12 @@ export function parseSlideLoc(loc: string): SlideLoc | null {
   return { file, line, column };
 }
 
+function escapeAttrValue(value: string): string {
+  return value.replace(/["\\]/g, '\\$&');
+}
+
 export function slideLocSelector(loc: SlideLoc): string {
-  const full = `[data-slide-loc="${loc.file}:${loc.line}:${loc.column}"]`;
+  const full = `[data-slide-loc="${escapeAttrValue(`${loc.file}:${loc.line}:${loc.column}`)}"]`;
   if (loc.file !== DEFAULT_DECK_FILE) return full;
   return `${full}, [data-slide-loc="${loc.line}:${loc.column}"]`;
 }

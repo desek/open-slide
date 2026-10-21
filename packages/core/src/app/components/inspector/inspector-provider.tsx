@@ -1216,9 +1216,10 @@ export function InspectorProvider({
           if (!hit || hit.anchor !== anchor) continue;
           anchor.setAttribute(INSTANCE_ID_ATTR, instanceId);
           bucket.textTargets.set(instanceId, { ...rememberTarget(hit), pageIndex });
-          bucket.file = hit.file;
-          bucket.line = hit.line;
-          bucket.column = hit.column;
+          if (hit.file === bucket.file) {
+            bucket.line = hit.line;
+            bucket.column = hit.column;
+          }
           // Native editing can mutate child nodes before its input event updates the buffer.
           if (!anchor.isContentEditable) replayDomTextEdits(anchor, html, steps);
         }
