@@ -33,7 +33,7 @@ A page can live in any `.tsx` file of the deck: in `index.tsx`, or in `pages/<nn
 
 1. **Identify the target slide(s).**
    - If the user names one (`getting-started`, `q2-roadmap`, etc.), work on that slide: scan every `.tsx` file under `slides/<slideId>/` (`index.tsx`, `pages/`, `shared/`).
-   - If they say "all" or don't specify, scan every `slides/*/**/*.tsx`. Process each slide one at a time, and within a slide one file at a time (steps 2–6 per file).
+   - If they say "all" or don't specify, scan every `.tsx` file that `find slides -type f -name '*.tsx'` lists (this includes each `slides/<id>/index.tsx`). Process each slide one at a time, and within a slide one file at a time (steps 2–6 per file).
 
 2. **Read each file and find all markers.**
    - Run the regex above against the whole file.

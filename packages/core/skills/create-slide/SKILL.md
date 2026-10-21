@@ -76,7 +76,7 @@ If the `frontend-design` skill is available, consult it for deeper aesthetic gui
 
 ## Step 6 — Write the slide files
 
-Write the files in the layout chosen in Step 4: one `slides/<id>/index.tsx` for 5 pages or fewer; otherwise one `pages/<nn>-<slug>.tsx` per page, shared components in `shared/`, and an `index.tsx` that imports and orders the pages and holds `design`, `meta` and `notes`.
+Write the files in the layout chosen in Step 4. For the single-file layout, write one `slides/<id>/index.tsx`. For the multi-file layout, write one `pages/<nn>-<slug>.tsx` per page, shared components in `shared/`, and an `index.tsx` that imports and orders the pages and holds `design`, `meta` and `notes`.
 
 
 Read the **`slide-authoring`** skill before writing — it covers the file contract, canvas rules, type scale, spacing, and asset imports, and it includes a starter template you can copy. Don't duplicate that knowledge here; use it.
