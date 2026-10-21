@@ -62,7 +62,7 @@ Sketch the slide as a list of page roles before writing code. Common page types:
 
 **Rule of thumb**: one idea per page. If you're tempted to put two, split them.
 
-**File layout** follows from the planned page count: a deck of 6 pages or more puts each page in pages/<nn>-<slug>.tsx, shared components in shared/, and index.tsx only imports, orders, and holds design, meta and notes. A deck of 5 pages or fewer stays in one `index.tsx`.
+**File layout**: the default is one `index.tsx`. For a large deck, or when pages will be reused between decks, you may put each page in `pages/<nn>-<slug>.tsx` with shared components in `shared/` and keep `index.tsx` for imports, order, `design`, `meta` and `notes`. See **File contract** in `slide-authoring` for both forms.
 
 If the deck topic naturally calls for specific real images the user must supply (product screenshots, team photos, customer dashboards), plan where those go and use `<ImagePlaceholder>` from `@open-slide/core` — see the **Image placeholders** section in `slide-authoring`. Default is **no placeholders**: only insert one when a real image is genuinely required.
 

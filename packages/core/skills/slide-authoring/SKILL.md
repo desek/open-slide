@@ -34,7 +34,7 @@ Each framework primitive has a full reference file under `references/` in this s
 - Entry is `slides/<id>/index.tsx`. Images/videos/fonts go under `slides/<id>/assets/`.
 - Do **not** touch `package.json`, `open-slide.config.ts`, or other slides.
 - Do not add dependencies. Only `react`, `@open-slide/core`, and standard web APIs are available.
-- File layout depends on page count: a deck of 6 pages or more puts each page in pages/<nn>-<slug>.tsx, shared components in shared/, and index.tsx only imports, orders, and holds design, meta and notes. A deck of 5 pages or fewer stays in one `index.tsx` with its helper components and constants inside it. `shared/` holds components and constants that several pages use. Do not create other `.tsx`/`.ts` files or folders (`components/`, `helpers.ts`, etc.). Do not create `README.md` or other prose files either — speaker notes / a talk script belong in the `notes` export (see **Speaker notes** below), not in a markdown file.
+- Two layouts are valid. The default is one `index.tsx` with its helper components and constants inside it. A deck may instead put each page in `pages/<nn>-<slug>.tsx`, shared components and constants in `shared/`, and keep `index.tsx` for imports, page order, `design`, `meta` and `notes`; use that layout for a large deck, or when pages are reused between decks. The inspector, comments and `/apply-comments` work on every file of the deck in either layout. Do not create other `.tsx`/`.ts` files or folders (`components/`, `helpers.ts`, etc.). Do not create `README.md` or other prose files either — speaker notes / a talk script belong in the `notes` export (see **Speaker notes** below), not in a markdown file.
 
 ## File contract
 
@@ -52,7 +52,7 @@ export const meta: SlideMeta = {
 export default [Cover, Body] satisfies Page[];
 ```
 
-Multi-file layout (6 pages or more):
+Multi-file layout (optional, for large decks or reused pages):
 
 ```tsx
 // slides/<id>/index.tsx
@@ -318,7 +318,7 @@ Read `references/morph.md` before writing one — the seven rules there (held ex
 
 When a page has visually repeated items — cards, logo rows, gallery tiles, list rows, step indicators — **define a small component and instantiate it once per item**. Do **not** render the group with `array.map` over a data array.
 
-Define the component in the same file as the `Page` that uses it. In a multi-file deck, a component that several pages use goes in `shared/`. The layout rule: a deck of 6 pages or more puts each page in pages/<nn>-<slug>.tsx, shared components in shared/, and index.tsx only imports, orders, and holds design, meta and notes.
+Define the component in the same file as the `Page` that uses it. In a multi-file deck, a component that several pages use goes in `shared/`.
 
 ```tsx
 // ✅ Each card is its own JSX node — inspector edits one at a time.
@@ -397,7 +397,7 @@ Then view the image and fix what you see. The preview hot-reloads like the edito
 
 ## Self-review before finishing
 
-- [ ] `slides/<id>/index.tsx` `export default`s a non-empty `Page[]` (pages defined inline, or imported from `pages/` in a deck of 6 pages or more).
+- [ ] `slides/<id>/index.tsx` `export default`s a non-empty `Page[]` (pages defined inline, or imported from `pages/` in a multi-file deck).
 - [ ] Every page's root fills `100% × 100%`.
 - [ ] Content lives inside padding (no text kisses the edge).
 - [ ] **For every page, sum (font_size × line_height × lines) + gaps + 2×padding ≤ 1080px.** If close, split the page. No `overflow: auto` escape hatches.

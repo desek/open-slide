@@ -29,7 +29,7 @@ Your job: read those markers, perform the described edits, and delete the marker
 
 ## Procedure
 
-A page can live in any `.tsx` file of the deck. The layout rule: a deck of 6 pages or more puts each page in pages/<nn>-<slug>.tsx, shared components in shared/, and index.tsx only imports, orders, and holds design, meta and notes. A deck of 5 pages or fewer is one `index.tsx`.
+A page can live in any `.tsx` file of the deck: in `index.tsx`, or in `pages/<nn>-<slug>.tsx` with shared components in `shared/` when the deck uses the multi-file layout. Markers can sit in any of these files.
 
 1. **Identify the target slide(s).**
    - If the user names one (`getting-started`, `q2-roadmap`, etc.), work on that slide: scan every `.tsx` file under `slides/<slideId>/` (`index.tsx`, `pages/`, `shared/`).
